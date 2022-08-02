@@ -1,0 +1,66 @@
+﻿@inject BlazorComplator.Services.IManagmentService ManagmentService
+
+<MudAppBar Style="@($"background-color:{Colors.BlueGrey.Default}")" Elevation="1">
+	<MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())"/>
+	<MudText Typo="Typo.h5" Class="ml-3"> Managment Studio  </MudText>
+	<MudSpacer/>
+	<MudIconButton Icon="@Icons.Material.Filled.Login" Href="/" Color="Color.Inherit" Edge="Edge.End"/>
+</MudAppBar>
+
+<MudDrawer @bind-Open="_drawerOpen" Style="@($"background-color:{Colors.BlueGrey.Lighten3}")" ClipMode="DrawerClipMode.Always" Elevation="2">
+    <MudDrawerHeader>
+	<MudText Typo="Typo.h5" Class="mt-1">DB List</MudText>
+</MudDrawerHeader>
+@if (getDbTableList == null)
+{
+	<MudProgressCircular Color="Color.Info" Indeterminate="true" />
+}
+else
+{
+
+	@foreach (var item in getDbTableList)
+	{
+		string[] table = @item.Split('|');
+		<MudTreeView T="string">
+			<MudTreeViewItem Value="@table[0]">
+				@for (int i = 1; i < @table.Length; i++)
+				{
+					<MudTreeViewItem Icon="@Icons.Filled.TableChart" Value="@table[i]" />
+				}
+			</MudTreeViewItem>
+		</MudTreeView>
+	}
+}
+
+</MudDrawer>
+
+
+
+
+
+@code {
+	[Parameter]
+	public string? conString { get; set; }
+
+	private List<string> getDbTableList = new List<string>();
+
+	bool _drawerOpen = true;
+
+	protected override async Task OnInitializedAsync()
+	{
+		GetTableList();
+	}
+
+	private List<string> GetTableList()
+	{
+		getDbTableList = ManagmentService.GetDbTables(conString);
+		return getDbTableList;
+	}
+
+	void DrawerToggle()
+	{
+		_drawerOpen = !_drawerOpen;
+	}
+
+}
+

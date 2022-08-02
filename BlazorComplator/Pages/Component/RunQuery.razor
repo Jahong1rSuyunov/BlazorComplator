@@ -1,0 +1,78 @@
+﻿@using System.Data
+@inject BlazorComplator.Services.IManagmentService ManagmentService
+
+<MudPaper Class="d-flex justify-start flex-grow-1 gap-4" Style="width:30%;" Elevation="0">
+    <MudSelect T="string" @bind-Value="getDb" Margin="Margin.Dense" Label="Db List" Variant="Variant.Outlined">
+        @foreach (var item in getDbList)
+        {
+            <MudSelectItem T="string" Value="@item" />
+        }
+
+    </MudSelect>
+
+
+    <MudButton OnClick="QueryRun" Variant="Variant.Outlined" Color="Color.Success">Execute</MudButton>
+</MudPaper>
+
+
+
+<MudTextField Label="Query" @bind-Value="@QueryResult" Variant="Variant.Filled" Lines="22" Style="@($"background-color:{Colors.Grey.Lighten5}")"></MudTextField>
+<hr />
+
+<MudSimpleTable Style="@($"overflow-x: auto; height:415px;background-color: {Colors.Grey.Lighten4};")">
+    <thead>
+        <tr>
+            @foreach (DataColumn col in dataTable.Columns)
+            {
+                <th>@col.ColumnName</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (DataRow row in dataTable.Rows)
+        {
+            <tr>
+                @foreach (var cell in row.ItemArray)
+                {
+                    <td>@cell</td>
+                }
+            </tr>
+        }
+    </tbody>
+</MudSimpleTable>
+
+
+
+
+
+@code {
+
+
+    [Parameter]
+    public string? conString { get; set; }
+
+    private DataTable dataTable = new DataTable();
+    private string? QueryResult { get; set; }
+    private string? getDb { get; set; }
+
+    private List<string> getDbList = new List<string>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        GetDbList();
+    }
+
+    private List<string> GetDbList()
+    {
+        getDbList = ManagmentService.GetDbList(conString);
+        return getDbList;
+    }
+    private void QueryRun()
+    {
+        dataTable = ManagmentService.RunQuery(conString, getDb, QueryResult);
+        StateHasChanged();
+
+    }
+
+
+}

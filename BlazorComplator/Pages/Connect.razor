@@ -1,0 +1,70 @@
+﻿@page "/"
+@using System.Data.SqlClient
+@using Microsoft.AspNetCore.WebUtilities
+@inject MudBlazor.ISnackbar snackBar
+@inject NavigationManager navManager
+
+<PageTitle>Connect</PageTitle>
+
+<MudContainer Style="height=250px;width=500px;" Class="center">
+    <MudCard Elevation="10">
+        <MudCardHeader>
+            <MudContainer>
+                <MudText Typo="Typo.h6">Connect Server</MudText>
+            </MudContainer>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudTextField @bind-Value="ServerName" Label="Server Name" Variant="Variant.Text" Margin="Margin.Normal"></MudTextField>
+            <MudCheckBox @bind-Checked="@booleon">Server Autentication</MudCheckBox>
+			<MudTextField @bind-Value="Login"  Required="booleon" RequiredError="Loginni kiring" Disabled="booleon?false:true" Label="Login" Variant="Variant.Text" Margin="Margin.Normal"></MudTextField>
+			<MudTextField @bind-Value="Password"  Required="booleon" RequiredError="Parolni kiring" Disabled="booleon?false:true" Label="Password" Variant="Variant.Text" Margin="Margin.Normal"></MudTextField>
+			<br />
+            <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ConnectionString">Connected</MudButton>
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
+
+@code {
+    private bool booleon { get; set; } = false;
+    
+    private string? ServerName { get; set; }
+
+    private string? Login { get; set; }
+
+    private string? Password{ get; set; }
+
+
+    public void ConnectionString()
+    {
+        try
+        {
+            string conString;
+            if (booleon == true)
+            {
+                conString = $"Data Source={ServerName};user id={Login};password={Password};";
+            }
+            else
+            {
+                conString = $"Data Source={ServerName};Integrated Security=True;";
+            }
+            
+            
+            var con = new SqlConnection(conString);
+            con.Open();
+            snackBar.Add("Connected", Severity.Success);
+            con.Close();
+
+            // LocalStore
+            var conParam = new Dictionary<string, string>
+                {
+                    ["conString"] = conString
+                };
+            navManager.NavigateTo(QueryHelpers.AddQueryString("index", conParam));
+        }
+        catch (SqlException ex)
+        {
+            snackBar.Add("Serverga ulanishda xato Error: " + ex.Message, Severity.Error);
+        }
+
+    }
+}

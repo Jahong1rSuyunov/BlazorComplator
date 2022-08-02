@@ -1,0 +1,30 @@
+﻿@page "/index"
+@using Microsoft.AspNetCore.WebUtilities
+@inject NavigationManager navManager
+
+<MudThemeProvider/>
+
+
+    <NavMenu conString="@ConString"/>
+
+    <RunQuery conString="@ConString"/>
+
+
+
+@code{
+
+    public string? ConString;
+
+    protected override void OnInitialized()
+    {
+        var uri = navManager.ToAbsoluteUri(navManager.Uri);
+
+        var queryString = QueryHelpers.ParseQuery(uri.Query);
+        if (queryString.TryGetValue("conString", out var name))
+        {
+            ConString = name;
+        }
+    }
+
+
+}
