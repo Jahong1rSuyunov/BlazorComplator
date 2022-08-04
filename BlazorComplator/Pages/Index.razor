@@ -5,13 +5,14 @@
 <MudThemeProvider/>
 
 
-    <NavMenu conString="@ConString"/>
+    <NavMenu ConnectorType="@ConnectorType" ConString="@ConString"/>
 
-    <RunQuery conString="@ConString"/>
+    <RunQuery ConnectorType="@ConnectorType" ConString="@ConString"/>
 
 
 
 @code{
+    public string? ConnectorType;
 
     public string? ConString;
 
@@ -20,9 +21,13 @@
         var uri = navManager.ToAbsoluteUri(navManager.Uri);
 
         var queryString = QueryHelpers.ParseQuery(uri.Query);
-        if (queryString.TryGetValue("conString", out var name))
+        if (queryString.TryGetValue("conString", out var conString))
         {
-            ConString = name;
+            ConString = conString;
+        }
+        if(queryString.TryGetValue("ConnectorType", out var connectorType))
+        {
+            this.ConnectorType = connectorType;
         }
     }
 

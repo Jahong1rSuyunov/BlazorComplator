@@ -1,9 +1,11 @@
 ﻿@using System.Data
-@inject BlazorComplator.Services.IManagmentService ManagmentService
+@using BlazorComplator.Factory
+@using BlazorComplator.Factory.Interfice
+@using BlazorComplator.Factory.Resault
 
 <MudPaper Class="d-flex justify-start flex-grow-1 gap-4" Style="width:30%;" Elevation="0">
     <MudSelect T="string" @bind-Value="getDb" Margin="Margin.Dense" Label="Db List" Variant="Variant.Outlined">
-        @foreach (var item in getDbList)
+        @foreach (var item in connector.GetDatabases())
         {
             <MudSelectItem T="string" Value="@item" />
         }
@@ -19,20 +21,20 @@
 <MudTextField Label="Query" @bind-Value="@QueryResult" Variant="Variant.Filled" Lines="22" Style="@($"background-color:{Colors.Grey.Lighten5}")"></MudTextField>
 <hr />
 
-<MudSimpleTable Style="@($"overflow-x: auto; height:415px;background-color: {Colors.Grey.Lighten4};")">
+<MudSimpleTable Style="@($"overflow-x: auto; height:405px;background-color: {Colors.Grey.Lighten4};")">
     <thead>
         <tr>
-            @foreach (DataColumn col in dataTable.Columns)
+            @foreach (var col in dataTable.Columns)
             {
-                <th>@col.ColumnName</th>
+                <th>@col</th>
             }
         </tr>
     </thead>
     <tbody>
-        @foreach (DataRow row in dataTable.Rows)
+        @foreach (var row in dataTable.Rows)
         {
             <tr>
-                @foreach (var cell in row.ItemArray)
+                @foreach (var cell in row.Data)
                 {
                     <td>@cell</td>
                 }
@@ -49,9 +51,14 @@
 
 
     [Parameter]
-    public string? conString { get; set; }
+    public string? ConString { get; set; }
 
-    private DataTable dataTable = new DataTable();
+    [Parameter]
+    public string? ConnectorType { get; set; }
+
+    private IConnector connector { get; set; }
+
+    private ResaultSet dataTable = new ResaultSet();
     private string? QueryResult { get; set; }
     private string? getDb { get; set; }
 
@@ -59,19 +66,14 @@
 
     protected override async Task OnInitializedAsync()
     {
-        GetDbList();
+        connector = ConnectorFactory.GetConnector(ConnectorType, ConString);        
+
     }
 
-    private List<string> GetDbList()
-    {
-        getDbList = ManagmentService.GetDbList(conString);
-        return getDbList;
-    }
     private void QueryRun()
     {
-        dataTable = ManagmentService.RunQuery(conString, getDb, QueryResult);
+        dataTable = connector.ExecuteQuery(getDb, QueryResult);
         StateHasChanged();
-
     }
 
 

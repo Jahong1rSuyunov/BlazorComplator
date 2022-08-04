@@ -1,4 +1,5 @@
-﻿@inject BlazorComplator.Services.IManagmentService ManagmentService
+﻿@using BlazorComplator.Factory
+@using BlazorComplator.Factory.Interfice
 
 <MudAppBar Style="@($"background-color:{Colors.BlueGrey.Default}")" Elevation="1">
 	<MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())"/>
@@ -11,21 +12,20 @@
     <MudDrawerHeader>
 	<MudText Typo="Typo.h5" Class="mt-1">DB List</MudText>
 </MudDrawerHeader>
-@if (getDbTableList == null)
+@if (connector.GetDatabases() == null)
 {
 	<MudProgressCircular Color="Color.Info" Indeterminate="true" />
 }
 else
 {
 
-	@foreach (var item in getDbTableList)
+	@foreach (var dbName in connector.GetDatabases())
 	{
-		string[] table = @item.Split('|');
 		<MudTreeView T="string">
-			<MudTreeViewItem Value="@table[0]">
-				@for (int i = 1; i < @table.Length; i++)
+			<MudTreeViewItem Value="dbName">
+				@foreach(var table in connector.GetTables(dbName))
 				{
-					<MudTreeViewItem Icon="@Icons.Filled.TableChart" Value="@table[i]" />
+					<MudTreeViewItem Icon="@Icons.Filled.TableChart" Value="table" />
 				}
 			</MudTreeViewItem>
 		</MudTreeView>
@@ -40,23 +40,20 @@ else
 
 @code {
 	[Parameter]
-	public string? conString { get; set; }
+	public string? ConString { get; set; }
 
-	private List<string> getDbTableList = new List<string>();
+	[Parameter]
+	public string? ConnectorType { get; set; }
+
+	private IConnector connector { get; set; }
 
 	bool _drawerOpen = true;
 
 	protected override async Task OnInitializedAsync()
 	{
-		GetTableList();
-	}
+		connector = ConnectorFactory.GetConnector(ConnectorType, ConString);
 
-	private List<string> GetTableList()
-	{
-		getDbTableList = ManagmentService.GetDbTables(conString);
-		return getDbTableList;
 	}
-
 	void DrawerToggle()
 	{
 		_drawerOpen = !_drawerOpen;

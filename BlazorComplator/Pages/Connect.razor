@@ -1,6 +1,9 @@
 ﻿@page "/"
 @using System.Data.SqlClient
+@using BlazorComplator.Factory
 @using Microsoft.AspNetCore.WebUtilities
+@using MySqlConnector
+@using Npgsql
 @inject MudBlazor.ISnackbar snackBar
 @inject NavigationManager navManager
 
@@ -14,11 +17,22 @@
             </MudContainer>
         </MudCardHeader>
         <MudCardContent>
-            <MudTextField @bind-Value="ServerName" Label="Server Name" Variant="Variant.Text" Margin="Margin.Normal"></MudTextField>
+            <MudTextField @bind-Value="ServerName" Required="true" Label="Server Name" Variant="Variant.Text" Margin="Margin.Normal"></MudTextField>
+            
             <MudCheckBox @bind-Checked="@booleon">Server Autentication</MudCheckBox>
-			<MudTextField @bind-Value="Login"  Required="booleon" RequiredError="Loginni kiring" Disabled="booleon?false:true" Label="Login" Variant="Variant.Text" Margin="Margin.Normal"></MudTextField>
-			<MudTextField @bind-Value="Password"  Required="booleon" RequiredError="Parolni kiring" Disabled="booleon?false:true" Label="Password" Variant="Variant.Text" Margin="Margin.Normal"></MudTextField>
-			<br />
+
+            <MudForm>
+                <MudRadioGroup @bind-SelectedOption="@ConnectorType">
+                    <MudRadio Option="@("MSSQL")" Color="Color.Primary">MSSQL</MudRadio>
+                    <MudRadio Option="@("MySQL")" Color="Color.Primary">MySQL</MudRadio>
+                    <MudRadio Option="@("NpgSQL")" Color="Color.Primary">NpgSQL</MudRadio>
+
+                </MudRadioGroup>
+            </MudForm>
+            
+            <MudTextField @bind-Value="Login" Required="booleon" RequiredError="Loginni kiring" Disabled="booleon?false:true" Label="Login" Variant="Variant.Text" Margin="Margin.Normal"></MudTextField>
+            <MudTextField @bind-Value="Password" Required="booleon" RequiredError="Parolni kiring" Disabled="booleon?false:true" Label="Password" Variant="Variant.Text" Margin="Margin.Normal"></MudTextField>
+            <br />
             <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ConnectionString">Connected</MudButton>
         </MudCardContent>
     </MudCard>
@@ -26,42 +40,78 @@
 
 @code {
     private bool booleon { get; set; } = false;
-    
+
     private string? ServerName { get; set; }
 
     private string? Login { get; set; }
 
-    private string? Password{ get; set; }
+    private string? Password { get; set; }
 
+    private string ConnectorType { get; set; } = "MSSQL";
 
     public void ConnectionString()
     {
+        string conString = "";
         try
         {
-            string conString;
-            if (booleon == true)
+            switch (ConnectorType)
             {
-                conString = $"Data Source={ServerName};user id={Login};password={Password};";
+                case "MSSQL":
+                    {
+                        if (booleon == true)
+                        {
+                            conString = $"Data Source={ServerName};user id={Login};password={Password};";
+                        }
+                        else
+                        {
+                            conString = $"Data Source={ServerName};Integrated Security=True;";
+                        }
+                        var con = new SqlConnection(conString);
+                        con.Open();
+                        con.Close();
+                    }
+                    break;
+                case "MySQL":
+                    {
+                        if (booleon == true)
+                        {
+                            conString = $"server={ServerName};port=3306;user={Login};password={Password};";
+                        }
+                        else
+                        {
+
+                        }
+                        var con = new MySqlConnection(conString);
+                        con.Open();
+                        con.Clone();
+                    }
+                    break;
+                case "NpgSQL":
+                    {
+                        if (booleon == true)
+                        {
+                            conString = $"server={ServerName};port=3306;user={Login};password={Password};";
+                        }
+                        var con = new NpgsqlConnection(conString);
+                        con.Open();
+                        con.Close();
+                    }
+                    break;
+                default:
+                    break;
             }
-            else
-            {
-                conString = $"Data Source={ServerName};Integrated Security=True;";
-            }
-            
-            
-            var con = new SqlConnection(conString);
-            con.Open();
-            snackBar.Add("Connected", Severity.Success);
-            con.Close();
+
+
 
             // LocalStore
             var conParam = new Dictionary<string, string>
                 {
-                    ["conString"] = conString
+                    ["conString"] = conString,
+                    ["connectorType"] = ConnectorType
                 };
             navManager.NavigateTo(QueryHelpers.AddQueryString("index", conParam));
         }
-        catch (SqlException ex)
+        catch (Exception ex)
         {
             snackBar.Add("Serverga ulanishda xato Error: " + ex.Message, Severity.Error);
         }
