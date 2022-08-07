@@ -1,7 +1,14 @@
 ﻿@using System.Data
+@using BlazorComplator.AppDbContext
 @using BlazorComplator.Factory
 @using BlazorComplator.Factory.Interfice
 @using BlazorComplator.Factory.Resault
+@using BlazorComplator.Models
+@inject BlazorComplator.Services.IQueryService QueryService
+@inject IDialogService DialogService
+@inject NavigationManager navManager
+@inject MudBlazor.ISnackbar snackBar
+
 
 <MudPaper Class="d-flex justify-start flex-grow-1 gap-4" Style="width:30%;" Elevation="0">
     <MudSelect T="string" @bind-Value="getDb" Margin="Margin.Dense" Label="Db List" Variant="Variant.Outlined">
@@ -14,8 +21,9 @@
 
 
     <MudButton OnClick="QueryRun" Variant="Variant.Outlined" Color="Color.Success">Execute</MudButton>
-</MudPaper>
 
+    <MudButton OnClick="SaveQuery" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Save" Color="Color.Info"  Size="Size.Small">Save Query</MudButton>
+</MudPaper>
 
 
 <MudTextField Label="Query" @bind-Value="@QueryResult" Variant="Variant.Filled" Lines="22" Style="@($"background-color:{Colors.Grey.Lighten5}")"></MudTextField>
@@ -54,19 +62,30 @@
     public string? ConString { get; set; }
 
     [Parameter]
-    public string? ConnectorType { get; set; }
+    public string ConnectorType { get; set; }
+
+    [Parameter]
+    public int QueryId { get; set; }
 
     private IConnector connector { get; set; }
 
     private ResaultSet dataTable = new ResaultSet();
-    private string? QueryResult { get; set; }
+    private string? QueryResult { get; set; } 
     private string? getDb { get; set; }
 
     private List<string> getDbList = new List<string>();
 
     protected override async Task OnInitializedAsync()
     {
-        connector = ConnectorFactory.GetConnector(ConnectorType, ConString);        
+        connector = ConnectorFactory.GetConnector(ConnectorType, ConString);
+
+    }
+    protected override async Task OnParametersSetAsync()
+    {
+        if (QueryId != 0)
+        {
+            QueryResult = QueryService.GetQuery(QueryId).QueryName;   
+        }
 
     }
 
@@ -75,6 +94,28 @@
         dataTable = connector.ExecuteQuery(getDb, QueryResult);
         StateHasChanged();
     }
+    private async Task SaveQuery()
+    {
+        var parameters = new DialogParameters { ["conType"] = ConnectorType };
+        var dialog = DialogService.Show<SaveQueryDialog>("Save Query", parameters);
+        var resault = await dialog.Result;
+
+        if (!resault.Cancelled && resault.Data != null)
+        {
+            string? name = resault.Data.ToString();
+                Query query = new Query()
+                {
+                    QueryName = name,
+                    QueryText = QueryResult,
+                    ConnectorType = ConnectorType
+                };
+                QueryService.Create(query);
+            
+        }
+        StateHasChanged();
+    }
+
+
 
 
 }

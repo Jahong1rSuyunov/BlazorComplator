@@ -1,5 +1,8 @@
 using BlazorComplator.Data;
+using BlazorComplator.AppDbContext;
+using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
+using BlazorComplator.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,7 +10,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<WeatherForecastService>();
+builder.Services.AddScoped<IQueryService, QueryService>();
 builder.Services.AddMudServices();
+builder.Services.AddDbContext<QueryDbContext>(optinos =>
+{
+    optinos.UseSqlServer(builder.Configuration.GetConnectionString("QueryDB"));
+}); 
 
 var app = builder.Build();
 

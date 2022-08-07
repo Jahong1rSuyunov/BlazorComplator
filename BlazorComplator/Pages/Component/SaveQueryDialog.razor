@@ -1,0 +1,29 @@
+﻿@inject BlazorComplator.Services.IQueryService QueryService
+@inject MudBlazor.ISnackbar snackBar
+
+<MudDialog ContentStyle="height: 120px;width: 400px;">
+    <DialogContent >
+        <MudTextField T="string" @bind-Value="QueryName" Label="Query Name" Required="true"></MudTextField>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+
+    [CascadingParameter] 
+    public MudDialogInstance MudDialog { get; set; }
+    [Parameter]
+    public string conType { get; set; } = "";
+
+    private string? QueryName{ get; set; }
+
+    private void Submit()
+    {
+        if (QueryService.CheckName(QueryName, conType) && QueryName != null)
+            MudDialog.Close(DialogResult.Ok(QueryName));
+            snackBar.Add("Error", Severity.Error);
+    }
+    private void Cancel() => MudDialog.Cancel();
+}

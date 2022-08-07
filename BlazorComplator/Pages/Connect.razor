@@ -6,6 +6,7 @@
 @using Npgsql
 @inject MudBlazor.ISnackbar snackBar
 @inject NavigationManager navManager
+@inject IDialogService DialogService
 
 <PageTitle>Connect</PageTitle>
 
@@ -22,7 +23,7 @@
             <MudCheckBox @bind-Checked="@booleon">Server Autentication</MudCheckBox>
 
             <MudForm>
-                <MudRadioGroup @bind-SelectedOption="@ConnectorType">
+                <MudRadioGroup @onclick="@OnRadio" @bind-SelectedOption="@ConnectorType">
                     <MudRadio Option="@("MSSQL")" Color="Color.Primary">MSSQL</MudRadio>
                     <MudRadio Option="@("MySQL")" Color="Color.Primary">MySQL</MudRadio>
                     <MudRadio Option="@("NpgSQL")" Color="Color.Primary">NpgSQL</MudRadio>
@@ -31,7 +32,8 @@
             </MudForm>
             
             <MudTextField @bind-Value="Login" Required="booleon" RequiredError="Loginni kiring" Disabled="booleon?false:true" Label="Login" Variant="Variant.Text" Margin="Margin.Normal"></MudTextField>
-            <MudTextField @bind-Value="Password" Required="booleon" RequiredError="Parolni kiring" Disabled="booleon?false:true" Label="Password" Variant="Variant.Text" Margin="Margin.Normal"></MudTextField>
+            <MudTextField @bind-Value="Password" Required="booleon" InputType="InputType.Password" RequiredError="Parolni kiring" Disabled="booleon?false:true" Label="Password" Variant="Variant.Text" Margin="Margin.Normal"></MudTextField>
+            <MudTextField @bind-Value="Port" Class="@visible" Required="booleon" RequiredError="Portnini kiring" Disabled="booleon?false:true" Label="Port" Variant="Variant.Text" Margin="Margin.Normal"></MudTextField>
             <br />
             <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ConnectionString">Connected</MudButton>
         </MudCardContent>
@@ -41,13 +43,22 @@
 @code {
     private bool booleon { get; set; } = false;
 
+    private string? visible { get; set; }
+
     private string? ServerName { get; set; }
 
     private string? Login { get; set; }
 
     private string? Password { get; set; }
 
+    private string? Port { get; set; }
+
     private string ConnectorType { get; set; } = "MSSQL";
+
+    protected override void OnInitialized()
+    {
+        OnRadio();
+    }
 
     public void ConnectionString()
     {
@@ -76,10 +87,6 @@
                         if (booleon == true)
                         {
                             conString = $"server={ServerName};port=3306;user={Login};password={Password};";
-                        }
-                        else
-                        {
-
                         }
                         var con = new MySqlConnection(conString);
                         con.Open();
@@ -116,5 +123,16 @@
             snackBar.Add("Serverga ulanishda xato Error: " + ex.Message, Severity.Error);
         }
 
+    }
+    private void OnRadio()
+    {
+        if (ConnectorType == "MSSQL")
+        {
+            visible = "invisible";
+        }
+        else
+        {
+            visible = "visible";
+        }
     }
 }
